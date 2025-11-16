@@ -1,25 +1,25 @@
 terraform {
-    backend "local" {
-        path = "terraform.tfstate"
-    }
+  backend "local" {
+    path = "terraform.tfstate"
+  }
 }
 
 provider "azurerm" {
-    tenant_id = var.tenant_id
-    subscription_id = var.subscription_id
-    features {
-    }
+  tenant_id       = var.tenant_id
+  subscription_id = var.subscription_id
+
+  features {
+  }
 }
 
 provider "azuread" {
-    tenant_id = var.tenant_id
+  tenant_id = var.tenant_id
 }
 
-provider "random" {
-}
+provider "random" {}
 
 resource "random_id" "codename_suffix" {
-    byte_length = 3
+  byte_length = 3
 }
 
 data "azuread_client_config" "current" {}
@@ -56,22 +56,22 @@ resource "azuread_application_redirect_uris" "default_web" {
 }
 
 resource "azurerm_resource_group" "default" {
-    location = var.location
-    name     = "rg-${var.codename}-${random_id.codename_suffix.hex}"
+  location = var.location
+  name     = "rg-${var.codename}-${random_id.codename_suffix.hex}"
 }
 
 resource "azurerm_user_assigned_identity" "default" {
-    location            = azurerm_resource_group.default.location
-    resource_group_name = azurerm_resource_group.default.name
-    name                = "mi-${var.codename}-${random_id.codename_suffix.hex}"
+  location            = azurerm_resource_group.default.location
+  resource_group_name = azurerm_resource_group.default.name
+  name                = "mi-${var.codename}-${random_id.codename_suffix.hex}"
 }
 
 resource "azurerm_service_plan" "default" {
-    location            = azurerm_resource_group.default.location
-    resource_group_name = azurerm_resource_group.default.name
-    name                = "plan-${var.codename}-${random_id.codename_suffix.hex}"
-    os_type             = var.appservice_os
-    sku_name            = var.appservice_sku
+  location            = azurerm_resource_group.default.location
+  resource_group_name = azurerm_resource_group.default.name
+  name                = "plan-${var.codename}-${random_id.codename_suffix.hex}"
+  os_type             = var.appservice_os
+  sku_name            = var.appservice_sku
 }
 
 resource "azurerm_linux_web_app" "default" {
@@ -85,7 +85,7 @@ resource "azurerm_linux_web_app" "default" {
     always_on = var.appservice_sku != "F1" && var.appservice_sku != "D1" ? true : false
   }
 
-  app_settings = { 
+  app_settings = {
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
     "AzureAD__ClientId"                                      = azuread_application_registration.default.client_id,
@@ -105,7 +105,7 @@ resource "azurerm_windows_web_app" "default" {
     always_on = var.appservice_sku != "F1" && var.appservice_sku != "D1" ? true : false
   }
 
-  app_settings = { 
+  app_settings = {
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
     "AzureAD__ClientId"                                      = azuread_application_registration.default.client_id,
