@@ -27,7 +27,8 @@ data "azuread_client_config" "current" {}
 resource "azuread_application_registration" "default" {
   display_name     = "sp-${var.codename}-${random_id.codename_suffix.hex}"
   description      = "sp-${var.codename}-${random_id.codename_suffix.hex}"
-  sign_in_audience = "AzureADMyOrg"
+  sign_in_audience = "AzureADMultipleOrgs"
+  #sign_in_audience = "AzureADMyOrg"
 
   homepage_url          = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/"
   logout_url            = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/logout"
@@ -66,6 +67,13 @@ resource "azurerm_user_assigned_identity" "default" {
   name                = "mi-${var.codename}-${random_id.codename_suffix.hex}"
 }
 
+resource "azurerm_application_insights" "default" {
+  location            = azurerm_resource_group.default.location
+  resource_group_name = azurerm_resource_group.default.name
+  name                = "apm-${var.codename}-${random_id.codename_suffix.hex}"
+  application_type    = "web"
+}
+
 resource "azurerm_service_plan" "default" {
   location            = azurerm_resource_group.default.location
   resource_group_name = azurerm_resource_group.default.name
@@ -85,7 +93,22 @@ resource "azurerm_linux_web_app" "default" {
     always_on = var.appservice_sku != "F1" && var.appservice_sku != "D1" ? true : false
   }
 
+  logs {
+    detailed_error_messages = false
+    failed_request_tracing  = false  
+
+    application_logs {
+      file_system_level = "Verbose"
+    }
+  }
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.default.id]
+  }
+
   app_settings = {
+    "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string    
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
     "AzureAD__ClientId"                                      = azuread_application_registration.default.client_id,
@@ -105,7 +128,22 @@ resource "azurerm_windows_web_app" "default" {
     always_on = var.appservice_sku != "F1" && var.appservice_sku != "D1" ? true : false
   }
 
+  logs {
+    detailed_error_messages = false
+    failed_request_tracing  = false  
+
+    application_logs {
+      file_system_level = "Verbose"
+    }
+  }
+  
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.default.id]
+  }
+
   app_settings = {
+    "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string    
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
     "AzureAD__ClientId"                                      = azuread_application_registration.default.client_id,
@@ -113,3 +151,4 @@ resource "azurerm_windows_web_app" "default" {
     "AzureAD__ClientCredentials__0__ManagedIdentityClientId" = azurerm_user_assigned_identity.default.client_id
   }
 }
+
