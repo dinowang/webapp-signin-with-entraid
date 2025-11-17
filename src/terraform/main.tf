@@ -77,7 +77,7 @@ resource "azurerm_application_insights" "default" {
 resource "azurerm_monitor_smart_detector_alert_rule" "example" {
   resource_group_name = azurerm_resource_group.default.name
   scope_resource_ids  = [azurerm_application_insights.default.id]
-  name                = "sdar-${var.codename}-${random_id.codename_suffix.hex}"
+  name                = "apm-${var.codename}-${random_id.codename_suffix.hex}-sdar"
   severity            = "Sev0"
   frequency           = "PT1M"
   detector_type       = "FailureAnomaliesDetector"
@@ -89,8 +89,8 @@ resource "azurerm_monitor_smart_detector_alert_rule" "example" {
 
 resource "azurerm_monitor_action_group" "default" {
   resource_group_name = azurerm_resource_group.default.name
-  name                = "ag-${var.codename}-${random_id.codename_suffix.hex}"
-  short_name          = "ag-${var.codename}"
+  name                = "apm-${var.codename}-${random_id.codename_suffix.hex}-ag"
+  short_name          = var.codename
 }
 
 resource "azurerm_service_plan" "default" {
