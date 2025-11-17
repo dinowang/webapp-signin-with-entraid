@@ -74,6 +74,25 @@ resource "azurerm_application_insights" "default" {
   application_type    = "web"
 }
 
+resource "azurerm_monitor_smart_detector_alert_rule" "example" {
+  resource_group_name = azurerm_resource_group.default.name
+  scope_resource_ids  = [azurerm_application_insights.default.id]
+  name                = "sdar-${var.codename}-${random_id.codename_suffix.hex}"
+  severity            = "Sev0"
+  frequency           = "PT1M"
+  detector_type       = "FailureAnomaliesDetector"
+
+  action_group {
+    ids = [azurerm_monitor_action_group.default.id]
+  }
+}
+
+resource "azurerm_monitor_action_group" "default" {
+  resource_group_name = azurerm_resource_group.default.name
+  name                = "ag-${var.codename}-${random_id.codename_suffix.hex}"
+  short_name          = "ag-${var.codename}"
+}
+
 resource "azurerm_service_plan" "default" {
   location            = azurerm_resource_group.default.location
   resource_group_name = azurerm_resource_group.default.name
@@ -126,6 +145,11 @@ resource "azurerm_windows_web_app" "default" {
 
   site_config {
     always_on = var.appservice_sku != "F1" && var.appservice_sku != "D1" ? true : false
+
+    application_stack {
+      current_stack = "dotnetcore"
+      dotnet_version = "v8.0"
+    }  
   }
 
   logs {
