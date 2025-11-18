@@ -12,7 +12,7 @@ env:
 jobs:
     terraform-deploy:
         name: Deploy Infrastructure
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         environment: production
         outputs:
             app_name: ${{ steps.terraform-output.outputs.app_name }}
