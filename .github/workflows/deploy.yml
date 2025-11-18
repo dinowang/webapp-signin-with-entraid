@@ -33,6 +33,14 @@ jobs:
               with:
                   creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+            - name: Cache Terraform State
+              uses: actions/cache@v4
+              with:
+                  path: ${{ env.TERRAFORM_DIRECTORY }}/terraform.tfstate
+                  key: terraform-state-${{ github.ref_name }}
+                  restore-keys: |
+                      terraform-state-
+
             - name: Terraform Init
               working-directory: ${{ env.TERRAFORM_DIRECTORY }}
               run: terraform init
@@ -66,6 +74,13 @@ jobs:
                     $rgName = (terraform show -json | ConvertFrom-Json).values.root_module.resources | Where-Object {$_.type -eq "azurerm_resource_group"} | Select-Object -First 1 -ExpandProperty values | Select-Object -ExpandProperty name
                   }
                   echo "resource_group=$rgName" >> $env:GITHUB_OUTPUT
+
+            - name: Save Terraform State
+              if: always()
+              uses: actions/cache/save@v4
+              with:
+                  path: ${{ env.TERRAFORM_DIRECTORY }}/terraform.tfstate
+                  key: terraform-state-${{ github.ref_name }}-${{ github.run_number }}
 
     build-and-deploy:
         name: Build and Deploy Application

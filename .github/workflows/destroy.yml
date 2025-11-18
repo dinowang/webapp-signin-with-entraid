@@ -1,0 +1,75 @@
+name: Destroy Azure Infrastructure
+
+on:
+    workflow_dispatch:
+        inputs:
+            confirm:
+                description: 'Type "destroy" to confirm destruction of all resources'
+                required: true
+                type: string
+
+env:
+    TERRAFORM_VERSION: "1.13.0"
+    TERRAFORM_DIRECTORY: "./src/terraform"
+
+jobs:
+    terraform-destroy:
+        name: Destroy Infrastructure
+        runs-on: ubuntu-latest
+        environment: production
+
+        steps:
+            - name: Validate Confirmation
+              run: |
+                  if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
+                    echo "::error::Confirmation failed. You must type 'destroy' to proceed."
+                    exit 1
+                  fi
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ env.TERRAFORM_VERSION }}
+                  terraform_wrapper: false
+
+            - name: Azure Login
+              uses: azure/login@v2
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: Cache Terraform State
+              uses: actions/cache@v4
+              with:
+                  path: ${{ env.TERRAFORM_DIRECTORY }}/terraform.tfstate
+                  key: terraform-state-${{ github.ref_name }}
+                  restore-keys: |
+                      terraform-state-
+                  fail-on-cache-miss: false
+
+            - name: Terraform Init
+              working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+              run: terraform init
+
+            - name: Terraform Destroy
+              working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+              run: |
+                  terraform destroy -auto-approve \
+                    -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
+                    -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+                    -var="location=${{ vars.AZURE_LOCATION || 'eastus' }}" \
+                    -var="codename=${{ vars.CODENAME || 'webapp' }}" \
+                    -var="appservice_os=Windows" \
+                    -var="appservice_sku=${{ vars.APPSERVICE_SKU || 'F1' }}"
+
+            - name: Clear Terraform State Cache
+              if: success()
+              run: |
+                  echo "Infrastructure destroyed successfully"
+                  echo "Note: You may need to manually clear the GitHub Actions cache if you want to remove the state file completely"
+
+            - name: Azure Logout
+              if: always()
+              run: az logout
