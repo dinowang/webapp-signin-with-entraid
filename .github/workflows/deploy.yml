@@ -5,7 +5,7 @@ on:
 
 env:
     DOTNET_VERSION: "8.0.x"
-    TERRAFORM_VERSION: "1.13.5"
+    TERRAFORM_VERSION: "1.13.0"
     WORKING_DIRECTORY: "./src/aspnet"
     TERRAFORM_DIRECTORY: "./src/terraform"
 
