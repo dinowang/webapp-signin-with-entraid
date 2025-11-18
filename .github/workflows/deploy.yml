@@ -13,6 +13,7 @@ jobs:
     terraform-deploy:
         name: Deploy Infrastructure
         runs-on: windows-latest
+        environment: dinom365
         outputs:
             app_name: ${{ steps.terraform-output.outputs.app_name }}
             resource_group: ${{ steps.terraform-output.outputs.resource_group }}
