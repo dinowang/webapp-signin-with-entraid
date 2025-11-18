@@ -10,7 +10,7 @@ output "zipdeploy_url" {
 
 output "resource_group" {
   description = "The name of the Resource Group"
-  value       = azurerm_resource_group.main.name
+  value       = azurerm_resource_group.default.name
 }
 
 output "app_name" {
