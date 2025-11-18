@@ -106,15 +106,15 @@ jobs:
 
       - name: Build
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release
 
       - name: Publish
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: dotnet publish --configuration Release --no-build --output ./publish
+        run: dotnet publish --configuration Release --output ./publish
 
       - name: Create deployment package
         working-directory: ${{ env.WORKING_DIRECTORY }}/publish
-        run: Compress-Archive -Path * -DestinationPath ../deploy.zip
+        run: Compress-Archive -Path * -DestinationPath ../deploy.zip -Force -CompressionLevel Optimal
 
       - name: Azure Login
         uses: azure/login@v2
