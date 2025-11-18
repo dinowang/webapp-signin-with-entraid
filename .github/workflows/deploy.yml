@@ -112,6 +112,10 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: dotnet publish --configuration Release --no-build --output ./publish
 
+      - name: Create deployment package
+        working-directory: ${{ env.WORKING_DIRECTORY }}/publish
+        run: Compress-Archive -Path * -DestinationPath ../deploy.zip
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -120,11 +124,13 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ needs.terraform-deploy.outputs.app_name }}
-          package: ${{ env.WORKING_DIRECTORY }}/publish
+      - name: Deploy to Azure Web App via Zip
+        run: |
+          az webapp deploy `
+            --resource-group ${{ needs.terraform-deploy.outputs.resource_group }} `
+            --name ${{ needs.terraform-deploy.outputs.app_name }} `
+            --type zip `
+            --src-path  ${{ env.WORKING_DIRECTORY }}/deploy.zip
 
       - name: Azure Logout
         if: always()

@@ -80,4 +80,10 @@ resource "azurerm_windows_web_app" "default" {
     "AzureAD__ClientCredentials__0__SourceType"              = "SignedAssertionFromManagedIdentity",
     "AzureAD__ClientCredentials__0__ManagedIdentityClientId" = azurerm_user_assigned_identity.default.client_id
   }
+
+  lifecycle {
+    ignore_changes = [
+      site_config.application_stack
+    ]
+  }
 }
