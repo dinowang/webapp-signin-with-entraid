@@ -67,9 +67,6 @@ jobs:
             - name: Terraform Apply
               working-directory: ${{ env.TERRAFORM_DIRECTORY }}
               run: terraform apply -auto-approve tfplan
-              env:
-                  TF_LOG: DEBUG
-                  TF_LOG_PROVIDER: DEBUG
 
             - name: Get Terraform Outputs
               id: terraform-output
