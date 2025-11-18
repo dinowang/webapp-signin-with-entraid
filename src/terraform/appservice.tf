@@ -36,7 +36,7 @@ resource "azurerm_linux_web_app" "default" {
     "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string    
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
-    "AzureAD__ClientId"                                      = azuread_application_registration.default.client_id,
+    "AzureAD__ClientId"                                      = azuread_application.default.client_id,
     "AzureAD__ClientCredentials__0__SourceType"              = "SignedAssertionFromManagedIdentity",
     "AzureAD__ClientCredentials__0__ManagedIdentityClientId" = azurerm_user_assigned_identity.default.client_id
   }
@@ -76,7 +76,7 @@ resource "azurerm_windows_web_app" "default" {
     "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string    
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
-    "AzureAD__ClientId"                                      = azuread_application_registration.default.client_id,
+    "AzureAD__ClientId"                                      = azuread_application.default.client_id,
     "AzureAD__ClientCredentials__0__SourceType"              = "SignedAssertionFromManagedIdentity",
     "AzureAD__ClientCredentials__0__ManagedIdentityClientId" = azurerm_user_assigned_identity.default.client_id
   }
