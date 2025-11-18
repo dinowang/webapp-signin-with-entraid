@@ -1,0 +1,108 @@
+name: Deploy to Azure
+
+on:
+    workflow_dispatch:
+
+env:
+    DOTNET_VERSION: "8.0.x"
+    TERRAFORM_VERSION: "1.9.0"
+    WORKING_DIRECTORY: "./src/aspnet"
+    TERRAFORM_DIRECTORY: "./src/terraform"
+
+jobs:
+    terraform-deploy:
+        name: Deploy Infrastructure
+        runs-on: windows-latest
+        outputs:
+            app_name: ${{ steps.terraform-output.outputs.app_name }}
+            resource_group: ${{ steps.terraform-output.outputs.resource_group }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: ${{ env.TERRAFORM_VERSION }}
+                  terraform_wrapper: false
+
+            - name: Azure Login
+              uses: azure/login@v2
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: Terraform Init
+              working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+              run: terraform init
+
+            - name: Terraform Plan
+              working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+              run: |
+                  terraform plan `
+                    -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}" `
+                    -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
+                    -var="location=${{ vars.AZURE_LOCATION || 'eastus' }}" `
+                    -var="codename=${{ vars.CODENAME || 'webapp' }}" `
+                    -var="appservice_os=Windows" `
+                    -var="appservice_sku=${{ vars.APPSERVICE_SKU || 'F1' }}" `
+                    -out=tfplan
+
+            - name: Terraform Apply
+              working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+              run: terraform apply -auto-approve tfplan
+
+            - name: Get Terraform Outputs
+              id: terraform-output
+              working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+              run: |
+                  $webAppName = terraform output -raw website_url
+                  $webAppName = $webAppName -replace 'https://', '' -replace '.azurewebsites.net/', ''
+                  echo "app_name=$webAppName" >> $env:GITHUB_OUTPUT
+
+                  $rgName = terraform output -json | ConvertFrom-Json | Select-Object -ExpandProperty resource_group_name.value
+                  if ([string]::IsNullOrEmpty($rgName)) {
+                    $rgName = (terraform show -json | ConvertFrom-Json).values.root_module.resources | Where-Object {$_.type -eq "azurerm_resource_group"} | Select-Object -First 1 -ExpandProperty values | Select-Object -ExpandProperty name
+                  }
+                  echo "resource_group=$rgName" >> $env:GITHUB_OUTPUT
+
+    build-and-deploy:
+        name: Build and Deploy Application
+        runs-on: windows-latest
+        needs: terraform-deploy
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: ${{ env.DOTNET_VERSION }}
+
+            - name: Restore dependencies
+              working-directory: ${{ env.WORKING_DIRECTORY }}
+              run: dotnet restore
+
+            - name: Build
+              working-directory: ${{ env.WORKING_DIRECTORY }}
+              run: dotnet build --configuration Release --no-restore
+
+            - name: Publish
+              working-directory: ${{ env.WORKING_DIRECTORY }}
+              run: dotnet publish --configuration Release --no-build --output ./publish
+
+            - name: Azure Login
+              uses: azure/login@v2
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: Deploy to Azure Web App
+              uses: azure/webapps-deploy@v3
+              with:
+                  app-name: ${{ needs.terraform-deploy.outputs.app_name }}
+                  package: ${{ env.WORKING_DIRECTORY }}/publish
+
+            - name: Azure Logout
+              if: always()
+              run: az logout
