@@ -16,6 +16,7 @@ provider "azuread" {
 }
 
 provider "random" {}
+provider "time" {}
 
 resource "random_id" "codename_suffix" {
   byte_length = 3

@@ -44,10 +44,19 @@ resource "azuread_application" "default" {
   terms_of_service_url  = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/"
 
   web {
-    homepage_url  = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/"
-    logout_url    = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/signout-oidc"
-    redirect_uris = [ "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/signin-oidc" ]
+    homepage_url = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/"
+    logout_url   = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/signout-oidc"
+
+    redirect_uris = [
+      "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/signin-oidc"
+    ]
   }
+}
+
+resource "time_sleep" "wait_application" {
+  create_duration = "60s" # 視情況調整 15~60s
+  
+  depends_on      = [azuread_application.default]
 }
 
 resource "azuread_application_federated_identity_credential" "default" {
@@ -57,4 +66,6 @@ resource "azuread_application_federated_identity_credential" "default" {
   issuer         = "https://login.microsoftonline.com/${var.tenant_id}/v2.0"
   subject        = azurerm_user_assigned_identity.default.principal_id
   audiences      = ["api://AzureADTokenExchange"]
+
+  depends_on = [ time_sleep.wait_application ]
 }

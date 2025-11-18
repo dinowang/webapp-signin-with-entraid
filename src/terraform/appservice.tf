@@ -20,7 +20,7 @@ resource "azurerm_linux_web_app" "default" {
 
   logs {
     detailed_error_messages = false
-    failed_request_tracing  = false  
+    failed_request_tracing  = false
 
     application_logs {
       file_system_level = "Verbose"
@@ -33,7 +33,7 @@ resource "azurerm_linux_web_app" "default" {
   }
 
   app_settings = {
-    "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string    
+    "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
     "AzureAD__ClientId"                                      = azuread_application.default.client_id,
@@ -53,27 +53,27 @@ resource "azurerm_windows_web_app" "default" {
     always_on = var.appservice_sku != "F1" && var.appservice_sku != "D1" ? true : false
 
     application_stack {
-      current_stack = "dotnetcore"
+      current_stack  = "dotnetcore"
       dotnet_version = "v8.0"
-    }  
+    }
   }
 
   logs {
     detailed_error_messages = false
-    failed_request_tracing  = false  
+    failed_request_tracing  = false
 
     application_logs {
       file_system_level = "Verbose"
     }
   }
-  
+
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.default.id]
   }
 
   app_settings = {
-    "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string    
+    "ApplicationInsights__ConnectionString"                  = azurerm_application_insights.default.connection_string
     "AzureAD__Instance"                                      = "https://login.microsoftonline.com/",
     "AzureAD__TenantId"                                      = var.tenant_id,
     "AzureAD__ClientId"                                      = azuread_application.default.client_id,
