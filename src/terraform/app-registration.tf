@@ -12,8 +12,12 @@ resource "azuread_application_registration" "default" {
   terms_of_service_url  = "https://web-${var.codename}-${random_id.codename_suffix.hex}.azurewebsites.net/"
 }
 
+data "azuread_application" "default" {
+  client_id = azuread_application_registration.default.client_id
+}
+
 resource "azuread_application_redirect_uris" "default_web" {
-  application_id = azuread_application_registration.default.id
+  application_id = data.azuread_application.default.id
   type           = "Web"
 
   redirect_uris = [
@@ -22,7 +26,7 @@ resource "azuread_application_redirect_uris" "default_web" {
 }
 
 resource "azuread_application_federated_identity_credential" "default" {
-  application_id = azuread_application_registration.default.id
+  application_id = data.azuread_application.default.id
   display_name   = azurerm_user_assigned_identity.default.name
   description    = azurerm_user_assigned_identity.default.name
   issuer         = "https://login.microsoftonline.com/${var.tenant_id}/v2.0"
