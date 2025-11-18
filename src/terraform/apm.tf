@@ -6,7 +6,7 @@ resource "azurerm_application_insights" "default" {
   application_type    = "web"
 }
 
-resource "azurerm_monitor_smart_detector_alert_rule" "example" {
+resource "azurerm_monitor_smart_detector_alert_rule" "default" {
   resource_group_name = azurerm_resource_group.default.name
   scope_resource_ids  = [azurerm_application_insights.default.id]
   name                = "apm-${var.codename}-${random_id.codename_suffix.hex}-condition"
