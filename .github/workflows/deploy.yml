@@ -3,6 +3,10 @@ name: Deploy to Azure
 on:
     workflow_dispatch:
 
+permissions:
+    id-token: write
+    contents: read
+
 env:
     DOTNET_VERSION: "8.0.x"
     TERRAFORM_VERSION: "1.13.0"

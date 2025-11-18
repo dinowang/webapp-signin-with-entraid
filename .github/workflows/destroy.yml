@@ -8,6 +8,10 @@ on:
                 required: true
                 type: string
 
+permissions:
+    id-token: write
+    contents: read
+
 env:
     TERRAFORM_VERSION: "1.13.0"
     TERRAFORM_DIRECTORY: "./src/terraform"
