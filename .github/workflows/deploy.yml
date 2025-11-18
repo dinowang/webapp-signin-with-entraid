@@ -88,6 +88,7 @@ jobs:
   build-and-deploy:
     name: Build and Deploy Application
     runs-on: windows-latest
+    environment: production
     needs: terraform-deploy
 
     steps:
