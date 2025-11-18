@@ -5,7 +5,7 @@ on:
 
 env:
     DOTNET_VERSION: "8.0.x"
-    TERRAFORM_VERSION: "1.9.0"
+    TERRAFORM_VERSION: "1.13.5"
     WORKING_DIRECTORY: "./src/aspnet"
     TERRAFORM_DIRECTORY: "./src/terraform"
 
@@ -13,7 +13,7 @@ jobs:
     terraform-deploy:
         name: Deploy Infrastructure
         runs-on: windows-latest
-        environment: dinom365
+        environment: production
         outputs:
             app_name: ${{ steps.terraform-output.outputs.app_name }}
             resource_group: ${{ steps.terraform-output.outputs.resource_group }}
